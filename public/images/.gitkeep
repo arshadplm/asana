@@ -1,0 +1,26 @@
+# Image Directory Structure
+#
+# Add your Instagram photos here organized as follows:
+#
+# portraits/
+#   hero.jpg          — Main hero portrait
+#   about.jpg         — About section portrait
+#   about-2.jpg       — Secondary about image
+#
+# lifestyle/
+#   01.jpg  02.jpg  03.jpg  (and more)
+#
+# fashion/
+#   01.jpg  02.jpg  03.jpg
+#
+# travel/
+#   01.jpg  02.jpg  03.jpg
+#
+# family/
+#   01.jpg  02.jpg
+#
+# memories/
+#   01.jpg  (and more)
+#
+# All images are automatically picked up by the site.
+# WebP format is preferred for best performance.
