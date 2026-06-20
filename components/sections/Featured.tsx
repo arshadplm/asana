@@ -3,33 +3,76 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
-import { Instagram, Heart, MessageCircle } from 'lucide-react'
+import { Instagram } from 'lucide-react'
 import { SectionHeader } from '@/components/ui/SectionHeader'
-import { FEATURED_POSTS } from '@/lib/constants'
+import { IMAGE_CATALOG, CATEGORY_GRADIENTS } from '@/lib/images'
 import { cn } from '@/lib/utils'
 
-const GRID_SPANS: Record<string, string> = {
-  large: 'col-span-2 row-span-2',
-  tall: 'col-span-1 row-span-2',
-  wide: 'col-span-2 row-span-1',
-  medium: 'col-span-1 row-span-1',
-  small: 'col-span-1 row-span-1',
+// ─── Masonry items ────────────────────────────────────────────────────────────
+
+interface MasonryItem {
+  id: string
+  src: string
+  category: string
+  gradient: string
+  aspectRatio: string
 }
 
-const ASPECT_RATIOS: Record<string, string> = {
-  large: '1/1',
-  tall: '9/16',
-  wide: '16/7',
-  medium: '4/5',
-  small: '1/1',
+// Varied aspect ratios cycle — creates masonry height diversity
+const ASPECTS = ['3/4', '4/5', '3/4', '1/1', '3/4', '2/3', '4/5', '3/4', '4/5', '1/1']
+
+function makeItems(): MasonryItem[] {
+  const groups: MasonryItem[][] = [
+    [...IMAGE_CATALOG.featured].map((src, i) => ({
+      id: `ft${i}`, src, category: 'portrait',
+      gradient: CATEGORY_GRADIENTS.featured,
+      aspectRatio: ASPECTS[i % ASPECTS.length],
+    })),
+    [...IMAGE_CATALOG.lifestyle].slice(0, 9).map((src, i) => ({
+      id: `ls${i}`, src, category: 'lifestyle',
+      gradient: CATEGORY_GRADIENTS.lifestyle,
+      aspectRatio: ASPECTS[(i + 1) % ASPECTS.length],
+    })),
+    [...IMAGE_CATALOG.fashion].map((src, i) => ({
+      id: `fa${i}`, src, category: 'fashion',
+      gradient: CATEGORY_GRADIENTS.fashion,
+      aspectRatio: ASPECTS[(i + 2) % ASPECTS.length],
+    })),
+    [...IMAGE_CATALOG.travel].slice(0, 8).map((src, i) => ({
+      id: `tr${i}`, src, category: 'travel',
+      gradient: CATEGORY_GRADIENTS.travel,
+      aspectRatio: ASPECTS[(i + 3) % ASPECTS.length],
+    })),
+    [...IMAGE_CATALOG.family].slice(0, 7).map((src, i) => ({
+      id: `fm${i}`, src, category: 'family',
+      gradient: CATEGORY_GRADIENTS.family,
+      aspectRatio: ASPECTS[(i + 4) % ASPECTS.length],
+    })),
+    [...IMAGE_CATALOG.memories].slice(0, 5).map((src, i) => ({
+      id: `mm${i}`, src, category: 'memories',
+      gradient: CATEGORY_GRADIENTS.memories,
+      aspectRatio: ASPECTS[(i + 5) % ASPECTS.length],
+    })),
+  ]
+
+  // Interleave groups round-robin so all categories are represented
+  const result: MasonryItem[] = []
+  for (let round = 0; ; round++) {
+    let added = false
+    for (const group of groups) {
+      if (group[round] !== undefined) {
+        result.push(group[round])
+        added = true
+      }
+    }
+    if (!added) break
+  }
+  return result.slice(0, 30)
 }
 
-// Stable engagement numbers seeded by post id — avoids hydration mismatch from Math.random()
-function engagementFromId(id: string) {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
-  return { likes: 100 + (hash % 900), comments: 5 + (hash % 45) }
-}
+const MASONRY_ITEMS = makeItems()
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export function Featured() {
   return (
@@ -62,10 +105,10 @@ export function Featured() {
           accentColor="emerald"
         />
 
-        {/* Feature grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 auto-rows-[280px] gap-3 lg:gap-4">
-          {FEATURED_POSTS.map((post, i) => (
-            <FeaturedCard key={post.id} post={post} index={i} />
+        {/* Premium masonry grid — CSS columns */}
+        <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-x-2">
+          {MASONRY_ITEMS.map((item, i) => (
+            <MasonryCard key={item.id} item={item} index={i} />
           ))}
         </div>
 
@@ -101,97 +144,73 @@ export function Featured() {
   )
 }
 
-function FeaturedCard({ post, index }: { post: (typeof FEATURED_POSTS)[0]; index: number }) {
+// ─── Masonry card ─────────────────────────────────────────────────────────────
+
+function MasonryCard({ item, index }: { item: MasonryItem; index: number }) {
   const [imgLoaded, setImgLoaded] = useState(false)
-  const [imgError, setImgError] = useState(false)
-  const { likes, comments } = engagementFromId(post.id)
+  const [imgError,  setImgError]  = useState(false)
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ delay: index * 0.08, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-      whileHover={{ scale: 1.02, y: -4 }}
-      className="relative overflow-hidden rounded-2xl group cursor-pointer border border-white/[0.06]"
-      style={{ aspectRatio: ASPECT_RATIOS[post.size] }}
-    >
-      {/* Gradient base */}
-      <div className={cn('absolute inset-0 bg-gradient-to-br', post.gradient)} />
+    // Plain div wrapper — owns column layout properties
+    <div style={{ breakInside: 'avoid', marginBottom: '8px', display: 'block' }}>
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.05 }}
+        transition={{
+          delay: (index % 10) * 0.04,
+          duration: 0.5,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
+        whileHover={{
+          scale: 1.04,
+          y: -5,
+          transition: { duration: 0.38, ease: [0.34, 1.56, 0.64, 1] },
+        }}
+        className="group relative overflow-hidden rounded-xl cursor-pointer border border-white/[0.06] hover:border-white/[0.14] transition-colors duration-500"
+        style={{ aspectRatio: item.aspectRatio }}
+      >
+        {/* Gradient base */}
+        <div className={cn('absolute inset-0 bg-gradient-to-br', item.gradient)} />
 
-      {/* Mesh texture — visible while no image loaded */}
-      {(!imgLoaded || imgError) && (
-        <>
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `linear-gradient(rgba(240,235,227,1) 1px, transparent 1px), linear-gradient(90deg, rgba(240,235,227,1) 1px, transparent 1px)`,
-              backgroundSize: '25px 25px',
-            }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center opacity-10">
-            <span className="text-cream text-6xl font-display">◈</span>
-          </div>
-        </>
-      )}
+        {/* Shimmer placeholder while loading */}
+        {!imgLoaded && !imgError && (
+          <div className="absolute inset-0 bg-white/[0.012] animate-pulse" />
+        )}
 
-      {/* Actual image */}
-      {post.src && !imgError && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: imgLoaded ? 1 : 0 }}
-          transition={{ duration: 0.5 }}
-          className="absolute inset-0"
-        >
+        {/* Image */}
+        {!imgError && (
           <Image
-            src={post.src}
-            alt={post.caption}
+            src={item.src}
+            alt={`${item.category} photograph`}
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+            className="object-cover select-none pointer-events-none"
             onLoad={() => setImgLoaded(true)}
             onError={() => setImgError(true)}
+            style={{
+              opacity: imgLoaded ? 1 : 0,
+              transition: 'opacity 0.5s ease',
+            }}
           />
-        </motion.div>
-      )}
+        )}
 
-      {/* Hover overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-obsidian/95 via-obsidian/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+        {/* Hover dark overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-      {/* Content */}
-      <div className="absolute inset-0 flex flex-col justify-end p-5 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500">
-        {/* Category */}
-        <div className="flex items-center gap-2 mb-3">
-          <Instagram size={11} className="text-emerald-bright" />
-          <span className="text-[0.6rem] tracking-[0.2em] uppercase text-emerald-bright font-body">
-            {post.category}
+        {/* Category label — slides up on hover */}
+        <div className="absolute bottom-0 inset-x-0 px-3 pb-3 translate-y-1 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <span className="text-[0.52rem] tracking-[0.14em] uppercase text-white/65 font-body capitalize">
+            {item.category}
           </span>
         </div>
 
-        {/* Caption */}
-        <p className="font-display italic text-cream/90 text-sm leading-snug line-clamp-3 mb-3">
-          &ldquo;{post.caption}&rdquo;
-        </p>
+        {/* Inset highlight ring on hover */}
+        <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/0 group-hover:ring-white/[0.09] transition-all duration-500" />
 
-        {/* Engagement */}
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5 text-[0.6rem] text-cream/40 font-body">
-            <Heart size={10} className="fill-cream/40 text-cream/40" />
-            {likes}
-          </span>
-          <span className="flex items-center gap-1.5 text-[0.6rem] text-cream/40 font-body">
-            <MessageCircle size={10} />
-            {comments}
-          </span>
-        </div>
-      </div>
-
-      {/* Top category pill (always visible) */}
-      <div className="absolute top-4 left-4">
-        <span className="text-[0.55rem] tracking-[0.15em] uppercase text-cream/40 bg-black/30 backdrop-blur-sm rounded-full px-2.5 py-1 font-body">
-          {post.category}
-        </span>
-      </div>
-    </motion.div>
+        {/* Subtle corner accent */}
+        <div className="absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full bg-white/0 group-hover:bg-white/20 transition-all duration-300" />
+      </motion.div>
+    </div>
   )
 }

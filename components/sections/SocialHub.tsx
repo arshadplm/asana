@@ -1,23 +1,38 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Instagram, ExternalLink, Heart, Image as ImageIcon, Users } from 'lucide-react'
+import Image from 'next/image'
 import { SectionHeader } from '@/components/ui/SectionHeader'
 import { StaggerContainer, StaggerItem } from '@/components/ui/AnimatedSection'
 import { SOCIAL_PROFILES } from '@/lib/constants'
+import { IMAGE_CATALOG } from '@/lib/images'
 import { cn } from '@/lib/utils'
 
-const SAMPLE_POST_GRADIENTS = [
-  'from-[#0A3D2B] to-[#051A14]',
-  'from-[#14100A] to-[#2E2014]',
-  'from-[#0F1F35] to-[#060B17]',
-  'from-[#180A0A] to-[#300C0C]',
-  'from-[#051A12] to-[#0A3828]',
-  'from-[#0C0A1A] to-[#1A1430]',
-  'from-[#1A0E00] to-[#3D2A08]',
-  'from-[#061425] to-[#0A2E40]',
-  'from-[#18080A] to-[#301416]',
-]
+// ─── Real images per profile — curated from local catalog ────────────────────
+// Portraits are confirmed present; fallback renders gracefully if any are absent.
+
+const PROFILE_IMAGES: Record<string, readonly string[]> = {
+  '@afsana.arshad_': [
+    IMAGE_CATALOG.portraits[1],  // 008_1
+    IMAGE_CATALOG.portraits[2],  // 008_2
+    IMAGE_CATALOG.portraits[0],  // 007_6
+    IMAGE_CATALOG.portraits[3],  // 008_3
+    IMAGE_CATALOG.portraits[4],  // 008_4
+    IMAGE_CATALOG.portraits[5],  // 008_5
+  ],
+  '@afsanahheeee': [
+    IMAGE_CATALOG.family[0],     // 001
+    IMAGE_CATALOG.family[2],     // 007_1
+    IMAGE_CATALOG.memories[0],   // 003_2
+    IMAGE_CATALOG.family[3],     // 007_2
+    IMAGE_CATALOG.family[1],     // 005
+    IMAGE_CATALOG.memories[2],   // 004
+  ],
+}
+
+// ─── Section ─────────────────────────────────────────────────────────────────
 
 export function SocialHub() {
   return (
@@ -99,8 +114,10 @@ export function SocialHub() {
   )
 }
 
+// ─── Social card ─────────────────────────────────────────────────────────────
+
 function SocialCard({ profile }: { profile: (typeof SOCIAL_PROFILES)[0] }) {
-  const isEmerald = profile.accentColor === '#22C87B'
+  const profileImages = PROFILE_IMAGES[profile.handle] ?? []
 
   return (
     <motion.div
@@ -117,14 +134,11 @@ function SocialCard({ profile }: { profile: (typeof SOCIAL_PROFILES)[0] }) {
         style={{ background: `radial-gradient(ellipse at 50% 0%, ${profile.accentColor}20 0%, transparent 70%)` }}
       />
 
-      {/* Instagram-style header gradient */}
+      {/* Header strip */}
       <div
         className="relative h-24 flex items-end pb-0"
-        style={{
-          background: `linear-gradient(135deg, ${profile.accentColor}25 0%, transparent 60%)`,
-        }}
+        style={{ background: `linear-gradient(135deg, ${profile.accentColor}25 0%, transparent 60%)` }}
       >
-        {/* Header pattern */}
         <div
           className="absolute inset-0 opacity-[0.04]"
           style={{
@@ -136,7 +150,7 @@ function SocialCard({ profile }: { profile: (typeof SOCIAL_PROFILES)[0] }) {
 
       {/* Profile section */}
       <div className="relative px-6 pb-6">
-        {/* Avatar */}
+        {/* Avatar + Follow */}
         <div className="flex items-end justify-between -mt-10 mb-4">
           <div
             className="w-20 h-20 rounded-full border-4 border-obsidian flex items-center justify-center"
@@ -144,7 +158,6 @@ function SocialCard({ profile }: { profile: (typeof SOCIAL_PROFILES)[0] }) {
           >
             <Instagram size={28} style={{ color: profile.accentColor }} />
           </div>
-
           <motion.a
             href={profile.url}
             target="_blank"
@@ -152,10 +165,7 @@ function SocialCard({ profile }: { profile: (typeof SOCIAL_PROFILES)[0] }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.96 }}
             className="flex items-center gap-1.5 px-5 py-2 text-[0.65rem] font-semibold tracking-[0.12em] uppercase rounded-full border transition-all duration-300"
-            style={{
-              borderColor: `${profile.accentColor}50`,
-              color: profile.accentColor,
-            }}
+            style={{ borderColor: `${profile.accentColor}50`, color: profile.accentColor }}
           >
             Follow
             <ExternalLink size={10} />
@@ -164,11 +174,11 @@ function SocialCard({ profile }: { profile: (typeof SOCIAL_PROFILES)[0] }) {
 
         {/* Name & handle */}
         <div className="mb-4">
-          <h3 className="font-display text-xl font-light text-cream mb-0.5">
-            {profile.handle}
-          </h3>
-          <p className="text-[0.65rem] tracking-[0.15em] uppercase font-body"
-            style={{ color: profile.accentColor }}>
+          <h3 className="font-display text-xl font-light text-cream mb-0.5">{profile.handle}</h3>
+          <p
+            className="text-[0.65rem] tracking-[0.15em] uppercase font-body"
+            style={{ color: profile.accentColor }}
+          >
             {profile.category}
           </p>
         </div>
@@ -179,7 +189,7 @@ function SocialCard({ profile }: { profile: (typeof SOCIAL_PROFILES)[0] }) {
         </p>
 
         {/* Stats */}
-        <div className="flex items-center gap-6 mb-6 py-4 border-y border-white/[0.06]">
+        <div className="flex items-center gap-6 mb-5 py-4 border-y border-white/[0.06]">
           <StatItem
             icon={<ImageIcon size={13} />}
             value={profile.posts}
@@ -200,20 +210,20 @@ function SocialCard({ profile }: { profile: (typeof SOCIAL_PROFILES)[0] }) {
           />
         </div>
 
-        {/* Sample posts grid */}
+        {/* ── 3×2 real-image grid — replaces colored block placeholders ── */}
         <div className="grid grid-cols-3 gap-1.5 rounded-xl overflow-hidden">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div
-              key={i}
-              className={cn(
-                'aspect-square rounded-sm bg-gradient-to-br',
-                SAMPLE_POST_GRADIENTS[i % SAMPLE_POST_GRADIENTS.length]
-              )}
+          {profileImages.slice(0, 6).map((src, i) => (
+            <PostThumbnail
+              key={src}
+              src={src}
+              alt={`${profile.handle} post ${i + 1}`}
+              accentColor={profile.accentColor}
+              index={i}
             />
           ))}
         </div>
 
-        {/* Link */}
+        {/* View full profile */}
         <motion.a
           href={profile.url}
           target="_blank"
@@ -230,6 +240,77 @@ function SocialCard({ profile }: { profile: (typeof SOCIAL_PROFILES)[0] }) {
   )
 }
 
+// ─── Post thumbnail ───────────────────────────────────────────────────────────
+
+function PostThumbnail({
+  src,
+  alt,
+  accentColor,
+  index,
+}: {
+  src: string
+  alt: string
+  accentColor: string
+  index: number
+}) {
+  const [loaded, setLoaded]   = useState(false)
+  const [errored, setErrored] = useState(false)
+
+  return (
+    <div className="group relative aspect-square overflow-hidden rounded-sm cursor-pointer">
+      {/* Skeleton shimmer — visible until image loads */}
+      {!loaded && !errored && (
+        <div
+          className="absolute inset-0 animate-pulse"
+          style={{ background: 'rgba(255,255,255,0.025)' }}
+        />
+      )}
+
+      {/* Fallback — shown if image fails to load */}
+      {errored && (
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            background: `radial-gradient(circle, ${accentColor}12 0%, rgba(255,255,255,0.015) 100%)`,
+          }}
+        >
+          <Instagram size={14} style={{ color: `${accentColor}55` }} />
+        </div>
+      )}
+
+      {/* Real photo — fades in on load, scales + brightens on hover */}
+      {!errored && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: loaded ? 1 : 0 }}
+          transition={{ duration: 0.45, delay: index * 0.05 }}
+          className="absolute inset-0"
+        >
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            sizes="(max-width: 1024px) 30vw, 150px"
+            className="object-cover select-none pointer-events-none transition-[transform,filter] duration-500 group-hover:scale-[1.09] group-hover:brightness-110"
+            onLoad={() => setLoaded(true)}
+            onError={() => setErrored(true)}
+          />
+        </motion.div>
+      )}
+
+      {/* Accent tint overlay on hover */}
+      <div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+        style={{
+          background: `radial-gradient(circle at 50% 50%, ${accentColor}18 0%, transparent 70%)`,
+        }}
+      />
+    </div>
+  )
+}
+
+// ─── Stat item ────────────────────────────────────────────────────────────────
+
 function StatItem({
   icon,
   value,
@@ -243,9 +324,13 @@ function StatItem({
 }) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <span style={{ color }} className="opacity-70">{icon}</span>
+      <span style={{ color }} className="opacity-70">
+        {icon}
+      </span>
       <span className="font-display text-lg font-light text-cream">{value}</span>
-      <span className="text-[0.55rem] tracking-[0.15em] uppercase text-muted font-body">{label}</span>
+      <span className="text-[0.55rem] tracking-[0.15em] uppercase text-muted font-body">
+        {label}
+      </span>
     </div>
   )
 }
