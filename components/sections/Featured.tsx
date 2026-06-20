@@ -150,9 +150,11 @@ function MasonryCard({ item, index }: { item: MasonryItem; index: number }) {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [imgError,  setImgError]  = useState(false)
 
+  if (imgError) return null
+
   return (
     // Plain div wrapper — owns column layout properties
-    <div style={{ breakInside: 'avoid', marginBottom: '8px', display: 'block' }}>
+    <div style={{ breakInside: 'avoid', marginBottom: '8px', display: 'block', width: '100%' }}>
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -168,7 +170,7 @@ function MasonryCard({ item, index }: { item: MasonryItem; index: number }) {
           transition: { duration: 0.38, ease: [0.34, 1.56, 0.64, 1] },
         }}
         className="group relative overflow-hidden rounded-xl cursor-pointer border border-white/[0.06] hover:border-white/[0.14] transition-colors duration-500"
-        style={{ aspectRatio: item.aspectRatio }}
+        style={{ aspectRatio: item.aspectRatio, width: '100%' }}
       >
         {/* Gradient base */}
         <div className={cn('absolute inset-0 bg-gradient-to-br', item.gradient)} />
@@ -191,6 +193,7 @@ function MasonryCard({ item, index }: { item: MasonryItem; index: number }) {
             style={{
               opacity: imgLoaded ? 1 : 0,
               transition: 'opacity 0.5s ease',
+              objectPosition: 'center center',
             }}
           />
         )}

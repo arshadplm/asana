@@ -64,6 +64,7 @@ export const GalleryImage = forwardRef<HTMLDivElement, GalleryImageProps>(
             draggable={false}
             priority={priority}
             loading={priority ? undefined : 'lazy'}
+            style={{ objectPosition: 'center center' }}
           />
         </div>
       </div>
